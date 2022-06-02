@@ -53,20 +53,24 @@ export class Assignment3 extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.camera_view);
+        this.key_triggered_button("Change to view 1", ["1"], () => (this.attached = changeView(1, this.current_view_number), this.current_view_number = 1));
+        this.key_triggered_button("Change to view 2", ["2"], () => (this.attached = changeView(2, this.current_view_number), this.current_view_number = 2));
         this.new_line();
-        this.key_triggered_button("Attach meow to planet 1", ["Control", "1"], () => this.attached = changeView(1, this.current_view_number));
-        this.key_triggered_button("Attach meow to planet 2", ["Control", "2"], () => this.attached = changeView(2, this.current_view_number));
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = changeView(3, this.current_view_number));
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = changeView(4, this.current_view_number));
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.key_triggered_button("Change to view 3", ["3"], () => (this.attached = changeView(3, this.current_view_number), this.current_view_number = 3));
+        this.key_triggered_button("Change to view 4", ["4"], () => (this.attached = changeView(4, this.current_view_number), this.current_view_number = 4));
         
-        this.key_triggered_button("Move forward", ["w"], () => this.hoop_number = moveToSquare(this.hoop_number, 'u'));
-        this.key_triggered_button("Move left", ["a"], () => this.hoop_number = moveToSquare(this.hoop_number, 'l'));
-        this.key_triggered_button("Move down", ["s"], () => this.hoop_number = moveToSquare(this.hoop_number, 'd'));
-        this.key_triggered_button("Move right", ["d"], () => this.hoop_number = moveToSquare(this.hoop_number, 'r'));
+        this.new_line();
+
+        this.key_triggered_button("Move forward", ["w"], () => this.hoop_number = moveToSquare(this.hoop_number, 'u', this.current_view_number));
+        this.key_triggered_button("Move left", ["a"], () => this.hoop_number = moveToSquare(this.hoop_number, 'l', this.current_view_number));
+        this.new_line();
+        this.key_triggered_button("Move down", ["s"], () => this.hoop_number = moveToSquare(this.hoop_number, 'd', this.current_view_number));
+        this.key_triggered_button("Move right", ["d"], () => this.hoop_number = moveToSquare(this.hoop_number, 'r', this.current_view_number));
+    }
+
+    endgame()
+    {
+
     }
 
     display(context, program_state) {
@@ -205,6 +209,7 @@ export class Assignment3 extends Scene {
     }
 }
 
+
 function changeView(view_direction, current_view)
 {
     if (view_direction == 1)
@@ -234,13 +239,20 @@ function changeView(view_direction, current_view)
 }
 
 
-function moveToSquare(hoop_number, direction){
+
+//Returns the square number that was moved to
+//hoop_number is the initial location
+//direction is the user's key direction u = up, r = right, d = down, l = left
+//cv is the current view angle (from views 1-4)
+function moveToSquare(hoop_number, direction, cv){
     if (hoop_number == 1)
     {
-        if (direction == 'r')
+        if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+            (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4))
         {
             return 2;
-        }else if (direction == 'd')
+        }else if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 4;
         }
@@ -250,14 +262,17 @@ function moveToSquare(hoop_number, direction){
     }
     else if (hoop_number == 2)
     {
-        if (direction == 'r'){
+        if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+        (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4)){
             return 3;
         }
-        else if (direction == 'd')
+        else if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 5;
         }
-        else if (direction == 'l')
+        else if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4))
         {
             return 1;
         }
@@ -266,11 +281,13 @@ function moveToSquare(hoop_number, direction){
     }   
     else if (hoop_number == 3)
     {
-        if (direction == 'd')
+        if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 6;
         }
-        else if (direction == 'l')
+        else if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4))
         {
             return 2;
         }
@@ -278,14 +295,17 @@ function moveToSquare(hoop_number, direction){
     }
     else if (hoop_number == 4)
     {
-        if (direction == 'u'){
+        if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4)){
             return 1;
         }
-        else if (direction == 'r')
+        else if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+        (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4))
         {
             return 5;
         }
-        else if (direction == 'd')
+        else if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 7;
         }
@@ -293,18 +313,22 @@ function moveToSquare(hoop_number, direction){
     }
     else if (hoop_number == 5)
     {
-        if (direction == 'r'){
+        if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+        (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4)){
             return 6;
         }
-        else if (direction == 'd')
+        else if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 8;
         }
-        else if (direction == 'l')
+        else if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4))
         {
             return 4;
         }
-        else if (direction == 'u')
+        else if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4))
         {
             return 2;
         }
@@ -312,14 +336,17 @@ function moveToSquare(hoop_number, direction){
     }
     else if(hoop_number == 6)
     {
-        if (direction == 'u'){
+        if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4)){
             return 3;
         }
-        else if (direction == 'd')
+        else if ((direction == 'd' && cv == 1) || (direction == 'l' && cv == 2) ||
+        (direction == 'u' && cv == 3) || (direction == 'r' && cv == 4))
         {
             return 9;
         }
-        else if (direction == 'l')
+        else if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4))
         {
             return 5;
         }
@@ -327,10 +354,12 @@ function moveToSquare(hoop_number, direction){
     }
     else if (hoop_number == 7)
     {
-        if (direction == 'r'){
+        if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+        (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4)){
             return 8;
         }
-        else if (direction == 'u')
+        else if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4))
         {
             return 4;
         }
@@ -338,14 +367,17 @@ function moveToSquare(hoop_number, direction){
     }
     else if (hoop_number == 8)
     {
-        if (direction == 'r'){
+        if ((direction == 'r' && cv == 1) || (direction == 'd' && cv == 2) ||
+        (direction == 'l' && cv == 3) || (direction == 'u' && cv == 4)){
             return 9;
         }
-        else if (direction == 'u')
+        else if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4))
         {
             return 5;
         }
-        else if (direction == 'l')
+        else if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4))
         {
             return 7;
         }
@@ -353,16 +385,19 @@ function moveToSquare(hoop_number, direction){
     }
     else
     {
-        if (direction == 'l'){
+        if ((direction == 'l' && cv == 1) || (direction == 'u' && cv == 2) ||
+        (direction == 'r' && cv == 3) || (direction == 'd' && cv == 4)){
             return 8;
         }
-        else if (direction == 'u')
+        else if ((direction == 'u' && cv == 1) || (direction == 'r' && cv == 2) ||
+        (direction == 'd' && cv == 3) || (direction == 'l' && cv == 4))
         {
             return 6;
         }
         return 9;
     }
 }
+
 
 
 class Gouraud_Shader extends Shader {
