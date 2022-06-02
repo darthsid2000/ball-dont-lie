@@ -39,11 +39,11 @@ export class Assignment3 extends Scene {
         //this.initial_camera_location = Mat4.look_at(vec3(0, 20, 100), vec3(0, 0, 0), vec3(0, 1, 0));
         //this.initial_camera_location = Mat4.rotation(Math.PI/2, 0, 1, 0).times(Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0)));
         //this.initial_camera_location = Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0));
-        this.initial_camera_location = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.view_1 = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.view_2 = Mat4.look_at(vec3(20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.view_3 = Mat4.look_at(vec3(0, 20, -20), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.view_4 = Mat4.look_at(vec3(-20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+        this.camera_view = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        this.current_view_number = 1;
+        //this.attached = this.camera_view;
         //this.view_2 = Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0));
         //this.view_3 = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.rotation(Math.PI, 0, 1, 0));
 
@@ -53,13 +53,13 @@ export class Assignment3 extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
+        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.camera_view);
         this.new_line();
-        this.key_triggered_button("Attach meow to planet 1", ["Control", "1"], () => this.attached = () => this.view_1);
-        this.key_triggered_button("Attach meow to planet 2", ["Control", "2"], () => this.attached = () => this.view_2);
+        this.key_triggered_button("Attach meow to planet 1", ["Control", "1"], () => this.attached = changeView(1, this.current_view_number));
+        this.key_triggered_button("Attach meow to planet 2", ["Control", "2"], () => this.attached = changeView(2, this.current_view_number));
         this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.view_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.view_4);
+        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = changeView(3, this.current_view_number));
+        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = changeView(4, this.current_view_number));
         this.new_line();
         this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
         
@@ -77,7 +77,7 @@ export class Assignment3 extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(this.initial_camera_location);
+            program_state.set_camera(this.camera_view);
         }
 
         program_state.projection_transform = Mat4.perspective(
@@ -194,19 +194,45 @@ export class Assignment3 extends Scene {
         this.shapes.circle.draw(context, program_state, model_transform_base9, this.materials.test.override({color: light_purple}));
         
 
-        if (this.attached){
-
-            if (this.attached() == this.initial_camera_location)
-            {
-                //this.shapes.sphere.draw(context, program_state, model_transform_base1, this.materials.test.override({color: white}));
-                program_state.set_camera(this.initial_camera_location);
-            }
-            else{
-                program_state.set_camera(this.attached());
-            }
+        if (this.attached)
+        {
+            //let desired = this.attached;
+            //desired = desired.map((x, i) => Vector.from(program_state.camera_transform[i]).mix(x, 0.9));
+            //program_state.set_camera(desired);
+            program_state.set_camera(this.attached);
         }
+        
     }
 }
+
+function changeView(view_direction, current_view)
+{
+    if (view_direction == 1)
+    {
+        current_view = 1;
+        return  Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+    }
+    else if (view_direction == 2)
+    {
+        current_view = 2;
+        return Mat4.look_at(vec3(20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+    }
+    else if (view_direction == 3)
+    {
+        current_view = 3;
+        return Mat4.look_at(vec3(0, 20, -20), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+    }
+    else if (view_direction == 4)
+    {
+        current_view = 4;
+        return Mat4.look_at(vec3(-20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+        
+    }
+}
+
 
 function moveToSquare(hoop_number, direction){
     if (hoop_number == 1)
