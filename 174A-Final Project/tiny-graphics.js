@@ -562,6 +562,7 @@ const Mat4 = tiny.Mat4 =
             return Matrix.of([1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]);
         };
 
+
         static rotation(angle, x, y, z) {
             // rotation(): Requires a scalar (angle) and a three-component axis vector.
             const normalize = (x, y, z) => {
