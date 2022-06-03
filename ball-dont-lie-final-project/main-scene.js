@@ -476,7 +476,7 @@ class Final_Project extends Scene {
           .times(Mat4.scale([0.5, 0.5, 0.5]));
 
       this.shapes.long_text.set_string(
-          "Rules: Win by hitting 3 home-runs (Swing with v) and DONT HIT THE BASKETBALLS",
+          "Rules: Win by hitting 3 home-runs (Swing with SPACE) and DONT HIT THE BASKETBALLS",
           context.context
       );
       this.shapes.long_text.draw(
