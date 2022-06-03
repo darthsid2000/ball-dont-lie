@@ -104,7 +104,7 @@ export class Assignment3 extends Scene {
         //this.initial_camera_location = Mat4.rotation(Math.PI/2, 0, 1, 0).times(Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0)));
         //this.initial_camera_location = Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0));
         
-        this.camera_view = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.camera_view = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.current_view_number = 1;
 
@@ -143,10 +143,10 @@ export class Assignment3 extends Scene {
 
     addScore()
     {
-        if (this.ball_speed > 100)
-        {
-            this.ball_speed = this.ball_speed - 10;
-        }
+        // if (this.ball_speed > 100)
+        // {
+        //     this.ball_speed = this.ball_speed - 10;
+        // }
         //this.ball_speed--;
         this.score++;
         if (this.score > this.high_score)
@@ -157,7 +157,7 @@ export class Assignment3 extends Scene {
 
     resetScore()
     {
-        this.ball_speed = 300;
+        this.ball_speed = 200;
         this.score = 0;
     }
 
@@ -230,7 +230,7 @@ export class Assignment3 extends Scene {
 
                                             
         let model_transform_ball = Mat4.identity();                                    
-        if (t % 10 <= 0.03)
+        if (t % 10 < 0.07)
         {
             //this.addScore();
             if (this.hoop_number == this.ball_1_location)
@@ -475,25 +475,25 @@ function changeView(view_direction, current_view)
     if (view_direction == 1)
     {
         current_view = 1;
-        return  Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        return  Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         
     }
     else if (view_direction == 2)
     {
         current_view = 2;
-        return Mat4.look_at(vec3(20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+        return Mat4.look_at(vec3(20, 10, 0), vec3(0, 0, 0), vec3(0, 1, 0));
         
     }
     else if (view_direction == 3)
     {
         current_view = 3;
-        return Mat4.look_at(vec3(0, 20, -20), vec3(0, 0, 0), vec3(0, 1, 0));
+        return Mat4.look_at(vec3(0, 10, -20), vec3(0, 0, 0), vec3(0, 1, 0));
         
     }
     else if (view_direction == 4)
     {
         current_view = 4;
-        return Mat4.look_at(vec3(-20, 20, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+        return Mat4.look_at(vec3(-20, 10, 0), vec3(0, 0, 0), vec3(0, 1, 0));
         
     }
 }
