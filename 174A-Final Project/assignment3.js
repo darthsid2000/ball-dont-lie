@@ -105,6 +105,14 @@ export class Assignment3 extends Scene {
             //        (Requirement 4)
         }
 
+        this.stars = new Material(new Shadow_Textured_Phong_Shader(1), {
+            color: color(.5, .5, .5, 1),
+            ambient: .4, diffusivity: .5, specularity: .5,
+            color_texture: new Texture("assets/stars.png"),
+            light_depth_texture: null
+
+        });
+
         this.floor = new Material(new Shadow_Textured_Phong_Shader(1), {
             color: color(1, 1, 1, 1), ambient: .3, diffusivity: 0.6, specularity: 0.4, smoothness: 64,
             color_texture: null,
@@ -171,10 +179,10 @@ export class Assignment3 extends Scene {
 
     addScore()
     {
-        // if (this.ball_speed > 100)
-        // {
-        //     this.ball_speed = this.ball_speed - 10;
-        // }
+        if (this.ball_speed > 100)
+        {
+            this.ball_speed = this.ball_speed - 2;
+        }
         //this.ball_speed--;
         this.score++;
         if (this.score > this.high_score)
@@ -215,7 +223,7 @@ export class Assignment3 extends Scene {
         this.lightDepthTexture = gl.createTexture();
         // Bind it to TinyGraphics
         this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
-        //this.stars.light_depth_texture = this.light_depth_texture;
+        this.stars.light_depth_texture = this.light_depth_texture;
         this.floor.light_depth_texture = this.light_depth_texture;
 
         this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
@@ -506,7 +514,7 @@ export class Assignment3 extends Scene {
         this.shapes.cube.draw(context, program_state, model_transform_scoreboard, this.materials.test.override({color: dark_blue}));
         //this.shapes.cube.draw(context, program_state, model_transform_scoreboard, this.materials.test.override({color: dark_blue}));
         
-        this.shapes.sphere.draw(context, program_state, model_transform_ball, shadow_pass? this.floor : this.pure);
+        this.shapes.sphere.draw(context, program_state, model_transform_ball, shadow_pass? this.stars : this.pure);
 
         // const funny_orbit = Mat4.rotation(Math.PI / 4 * t, Math.cos(t), Math.sin(t), .7 * Math.cos(t));
         // this.shapes.cube.draw(context, program_state, funny_orbit, this.materials.test.override({color: light_purple}));
@@ -561,11 +569,7 @@ export class Assignment3 extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(Mat4.look_at(
-                vec3(0, 12, 12),
-                vec3(0, 2, 0),
-                vec3(0, 1, 0)
-            )); // Locate the camera here
+            program_state.set_camera(this.camera_view); // Locate the camera here
         }
 
         // The position of the light
