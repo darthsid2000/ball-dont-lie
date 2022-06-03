@@ -323,7 +323,7 @@ class Final_Project extends Scene {
       this.currentState = this.stateOfGame.started;
     });
     this.key_triggered_button("Restart Game", ["r"], () => {
-      this.currentState = this.stateOfGame.started;
+      this.currentState = this.stateOfGame.beforeStart;
       this.currentLevel = 1;
       this.gameTarget = 3;
       this.currentScore = 0;
@@ -432,6 +432,10 @@ class Final_Project extends Scene {
     const lights_on = this.nightTime ? { ambient: 1.0 } : { ambient: 0.0 };
 
     if (this.currentState == this.stateOfGame.beforeStart) {
+      program_state.set_camera(
+        Mat4.inverse(Mat4.identity().times(Mat4.translation([0, 500, 0])))
+      );
+
       this.sounds.standby.play();
       let title_backdrop = Mat4.identity();
 
