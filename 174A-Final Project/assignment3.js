@@ -1,8 +1,51 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+
+export class Text_Line extends Shape {                           // **Text_Line** embeds text in the 3D world, using a crude texture
+    // method.  This Shape is made of a horizontal arrangement of quads.
+    // Each is textured over with images of ASCII characters, spelling
+    // out a string.  Usage:  Instantiate the Shape with the desired
+    // character line width.  Then assign it a single-line string by calling
+    // set_string("your string") on it. Draw the shape on a material
+    // with full ambient weight, and text.png assigned as its texture
+    // file.  For multi-line strings, repeat this process and draw with
+    // a different matrix.
+    constructor(max_size) {
+        super("position", "normal", "texture_coord");
+        this.max_size = max_size;
+        var object_transform = Mat4.identity();
+        for (var i = 0; i < max_size; i++) {                                       // Each quad is a separate Square instance:
+            defs.Square.insert_transformed_copy_into(this, [], object_transform);
+            object_transform.post_multiply(Mat4.translation(1.5, 0, 0));
+        }
+    }
+
+    set_string(line, context) {           // set_string():  Call this to overwrite the texture coordinates buffer with new
+        // values per quad, which enclose each of the string's characters.
+        this.arrays.texture_coord = [];
+        for (var i = 0; i < this.max_size; i++) {
+            var row = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) / 16),
+                col = Math.floor((i < line.length ? line.charCodeAt(i) : ' '.charCodeAt()) % 16);
+
+            var skip = 3, size = 32, sizefloor = size - skip;
+            var dim = size * 16,
+                left = (col * size + skip) / dim, top = (row * size + skip) / dim,
+                right = (col * size + sizefloor) / dim, bottom = (row * size + sizefloor + 5) / dim;
+
+            this.arrays.texture_coord.push(...Vector.cast([left, 1 - bottom], [right, 1 - bottom],
+                [left, 1 - top], [right, 1 - top]));
+        }
+        if (!this.existing) {
+            this.copy_onto_graphics_card(context);
+            this.existing = true;
+        } else
+            this.copy_onto_graphics_card(context, ["texture_coord"], false);
+    }
+}
+
 
 export class Assignment3 extends Scene {
     constructor() {
@@ -13,6 +56,16 @@ export class Assignment3 extends Scene {
         this.hoop_location = Mat4.identity();
         this.hoop_number = 5;
 
+        this.score = 0;
+
+        this.ball_1_location = 4;
+
+        this.ball_2_location = 5;
+
+        this.high_score = 0;
+
+        this.ball_speed = 300;
+
         //this.initial_camera_location = 
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -21,9 +74,20 @@ export class Assignment3 extends Scene {
             torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
+            cube: new defs.Cube(),
+            text: new Text_Line(40),
+            square: new defs.Square(),
+            
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
         };
+
+        const texture = new defs.Textured_Phong(1);
+
+        this.text_image = new Material(texture, {
+            ambient: 1, diffusivity: 0, specularity: 0,
+            texture: new Texture("assets/text.png")
+        });
 
         // *** Materials
         this.materials = {
@@ -43,6 +107,7 @@ export class Assignment3 extends Scene {
         this.camera_view = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.current_view_number = 1;
+
         //this.attached = this.camera_view;
         //this.view_2 = Mat4.look_at(vec3(0, 20, 10), vec3(0, 5, 0), vec3(0, 1, 0));
         //this.view_3 = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.rotation(Math.PI, 0, 1, 0));
@@ -66,11 +131,55 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.key_triggered_button("Move down", ["s"], () => this.hoop_number = moveToSquare(this.hoop_number, 'd', this.current_view_number));
         this.key_triggered_button("Move right", ["d"], () => this.hoop_number = moveToSquare(this.hoop_number, 'r', this.current_view_number));
+    
+        this.new_line();
+        this.key_triggered_button("turn on", ["e"], () => this.endgame);
+        this.key_triggered_button("turn off", ["q"], () => this.startgame);
+
+        this.new_line();
+        this.key_triggered_button("add score", ["c"], () => (this.addScore()));
+        this.key_triggered_button("reset score", ["5"], () => (this.resetScore()));
     }
+
+    addScore()
+    {
+        if (this.ball_speed > 100)
+        {
+            this.ball_speed = this.ball_speed - 10;
+        }
+        //this.ball_speed--;
+        this.score++;
+        if (this.score > this.high_score)
+        {
+            this.high_score = this.score;
+        }
+    }
+
+    resetScore()
+    {
+        this.ball_speed = 300;
+        this.score = 0;
+    }
+
+    // newLocation(ballNum)
+    // {
+    //     if (ballNum == 1)
+    //     {
+    //         this.ball_1_location = 
+    //     }
+    // }
+
 
     endgame()
     {
+        var overlay = document.getElementById('overlay');
+        overlay.style.display = "block";
+    }
 
+    startgame()
+    {
+        var overlay = document.getElementById('overlay');
+        overlay.style.display = "none";
     }
 
     display(context, program_state) {
@@ -96,7 +205,7 @@ export class Assignment3 extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        const t = program_state.animation_time / this.ball_speed, dt = program_state.animation_delta_time / this.ball_speed;
         const yellow = hex_color("#fac91a");
 
         
@@ -114,6 +223,105 @@ export class Assignment3 extends Scene {
         let model_transform_base7 = model_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0)).times(Mat4.translation(-2, 2, 0.5));
         let model_transform_base8 = model_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0)).times(Mat4.translation(0, 2, 0.5));
         let model_transform_base9 = model_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0)).times(Mat4.translation(2, 2, 0.5));
+
+        
+        let model_transform_scoreboard = model_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0)).times(Mat4.translation(0, 5, 0.5)
+                                            .times(Mat4.scale(2, 1, 0.1)));
+
+                                            
+        let model_transform_ball = Mat4.identity();                                    
+        if (t % 10 <= 0.03)
+        {
+            //this.addScore();
+            if (this.hoop_number == this.ball_1_location)
+            {
+                this.addScore();
+            }
+            else
+            {
+                this.resetScore();
+            }
+            this.ball_1_location = Math.floor(Math.random() * (9) + 1);
+            if (this.ball_1_location == 1)
+            {
+                model_transform_ball = model_transform_base1.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 2)
+            {
+                model_transform_ball = model_transform_base2.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 3)
+            {
+                model_transform_ball = model_transform_base3.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 4)
+            {
+                model_transform_ball = model_transform_base4.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 5)
+            {
+                model_transform_ball = model_transform_base5.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 6)
+            {
+                model_transform_ball = model_transform_base6.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 7)
+            {
+                model_transform_ball = model_transform_base7.times(Mat4.translation(0, 0, -11));
+            }
+            else if (this.ball_1_location == 8)
+            {
+                model_transform_ball = model_transform_base8.times(Mat4.translation(0, 0, -11));
+            }
+            else{
+                model_transform_ball = model_transform_base9.times(Mat4.translation(0, 0, -11));
+            }
+        }
+        else
+        {
+            if (this.ball_1_location == 1)
+            {
+                model_transform_ball = model_transform_base1.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 2)
+            {
+                 model_transform_ball = model_transform_base2.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 3)
+            {
+                 model_transform_ball = model_transform_base3.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 4)
+            {
+                 model_transform_ball = model_transform_base4.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 5)
+            {
+                 model_transform_ball = model_transform_base5.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 6)
+            {
+                 model_transform_ball = model_transform_base6.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 7)
+            {
+                 model_transform_ball = model_transform_base7.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else if (this.ball_1_location == 8)
+            {
+                 model_transform_ball = model_transform_base8.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+            else
+            {
+                 model_transform_ball = model_transform_base9.times(Mat4.translation(0, 0, -(11 - t % 10)));
+            }
+
+
+        }
+        
+
+
 
         let desired = model_transform;
         if (this.hoop_number == 1)
@@ -182,22 +390,74 @@ export class Assignment3 extends Scene {
         const blue = hex_color("#4D76F2");
         const purple = hex_color("#9247D8");
         const light_purple = hex_color("#C5A0E6");
+        const dark_blue = hex_color("#00008b");
 
         
         
 
         
-        this.shapes.circle.draw(context, program_state, model_transform_base1, this.materials.test.override({color: red}));
-        this.shapes.circle.draw(context, program_state, model_transform_base2, this.materials.test.override({color: orange}));
-        this.shapes.circle.draw(context, program_state, model_transform_base3, this.materials.test.override({color: yellow2}));
-        this.shapes.circle.draw(context, program_state, model_transform_base4, this.materials.test.override({color: green}));
-        this.shapes.circle.draw(context, program_state, model_transform_base5, this.materials.test.override({color: white}));
-        this.shapes.circle.draw(context, program_state, model_transform_base6, this.materials.test.override({color: light_blue}));
-        this.shapes.circle.draw(context, program_state, model_transform_base7, this.materials.test.override({color: blue}));
-        this.shapes.circle.draw(context, program_state, model_transform_base8, this.materials.test.override({color: purple}));
-        this.shapes.circle.draw(context, program_state, model_transform_base9, this.materials.test.override({color: light_purple}));
+        this.shapes.square.draw(context, program_state, model_transform_base1, this.materials.test.override({color: red}));
+        this.shapes.square.draw(context, program_state, model_transform_base2, this.materials.test.override({color: orange}));
+        this.shapes.square.draw(context, program_state, model_transform_base3, this.materials.test.override({color: yellow2}));
+        this.shapes.square.draw(context, program_state, model_transform_base4, this.materials.test.override({color: green}));
+        this.shapes.square.draw(context, program_state, model_transform_base5, this.materials.test.override({color: white}));
+        this.shapes.square.draw(context, program_state, model_transform_base6, this.materials.test.override({color: light_blue}));
+        this.shapes.square.draw(context, program_state, model_transform_base7, this.materials.test.override({color: blue}));
+        this.shapes.square.draw(context, program_state, model_transform_base8, this.materials.test.override({color: purple}));
+        this.shapes.square.draw(context, program_state, model_transform_base9, this.materials.test.override({color: light_purple}));
         
+        this.shapes.cube.draw(context, program_state, model_transform_scoreboard, this.materials.test.override({color: dark_blue}));
+        //this.shapes.cube.draw(context, program_state, model_transform_scoreboard, this.materials.test.override({color: dark_blue}));
+        
+        this.shapes.sphere.draw(context, program_state, model_transform_ball, this.materials.test.override({color: dark_blue}));
 
+        // const funny_orbit = Mat4.rotation(Math.PI / 4 * t, Math.cos(t), Math.sin(t), .7 * Math.cos(t));
+        // this.shapes.cube.draw(context, program_state, funny_orbit, this.materials.test.override({color: light_purple}));
+
+
+        let strings = ["Score: " + this.score.toString(), "High Score: " + this.high_score.toString()];
+        //let strings = ["Score: ab", "High Score: cd"];
+
+        // // Sample the "strings" array and draw them onto a cube.
+        // for (let i = 0; i < 3; i++)
+        //     for (let j = 0; j < 2; j++) {             // Find the matrix for a basis located along one of the cube's sides:
+        //         let cube_side = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
+        //             .times(Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0))
+        //             .times(Mat4.translation(-.9, .9, 1.01));
+
+        //         const multi_line_string = strings[2 * i + j].split('\n');
+        //         // Draw a Text_String for every line in our string, up to 30 lines:
+        //         //for (let line of multi_line_string.slice(0, 30)) {             // Assign the string to Text_String, and then draw it.
+        //             this.shapes.text.set_string(this.score.toString(), context.context);
+        //             this.shapes.text.draw(context, program_state, funny_orbit.times(cube_side)
+        //                 .times(Mat4.scale(3, 3, 3)), this.text_image);
+        //             // Move our basis down a line.
+        //             cube_side.post_multiply(Mat4.translation(0, -.06, 0));
+        //         //}
+        //     }
+
+        let scoreboard_front = model_transform_scoreboard.times(Mat4.translation(-0.8, -0.2, -1.1)).times(Mat4.rotation(Math.PI, 1, 0, 0));
+    
+        for (let i = 0; i < 2; i++) {             // Assign the string to Text_String, and then draw it.
+            this.shapes.text.set_string(strings[i], context.context);
+            this.shapes.text.draw(context, program_state, scoreboard_front
+                .times(Mat4.scale(0.08, 0.20, 0.3)), this.text_image);
+            // Move our basis down a line.
+            scoreboard_front.post_multiply(Mat4.translation(0, -.6, 0));
+        }
+
+        // this.shapes.text.set_string(line, context.context);
+        //             this.shapes.text.draw(context, program_state, model_transform_scoreboard.times(Mat4.translation(-0.7, 0, -1.1))
+        //                 //.times(Mat4.rotation(Math.PI, 0, 0, 0))
+        //                 .times(Mat4.rotation(Math.PI, 1, 0, 0))
+        //                 .times(Mat4.scale(0.12, 0.3, 0.3)), this.text_image);
+
+        // this.shapes.text.set_string(("High Score: " + this.high_score.toString()), context.context);
+        // this.shapes.text.draw(context, program_state, model_transform_scoreboard.times(Mat4.translation(-0.7, 0, -1.1))
+        //     //.times(Mat4.rotation(Math.PI, 0, 0, 0))
+        //     .times(Mat4.rotation(Math.PI, 1, 0, 0))
+        //     .times(Mat4.scale(0.12, 0.3, 0.3)), this.text_image);
+        
         if (this.attached)
         {
             //let desired = this.attached;
