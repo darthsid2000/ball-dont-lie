@@ -616,12 +616,12 @@ export class Assignment3 extends Scene {
         this.render_scene(context, program_state, true,true, true);
 
         // Step 3: display the textures
-        this.shapes.square_2d.draw(context, program_state,
-            Mat4.translation(-.99, .08, 0).times(
-            Mat4.scale(0.5, 0.5 * gl.canvas.width / gl.canvas.height, 1)
-            ),
-            this.depth_tex.override({texture: this.lightDepthTexture})
-        );
+        // this.shapes.square_2d.draw(context, program_state,
+        //     Mat4.translation(-.99, .08, 0).times(
+        //     Mat4.scale(0.5, 0.5 * gl.canvas.width / gl.canvas.height, 1)
+        //     ),
+        //     this.depth_tex.override({texture: this.lightDepthTexture})
+        // );
         if (this.attached)
         {
             //let desired = this.attached;
