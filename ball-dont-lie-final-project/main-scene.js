@@ -121,6 +121,7 @@ class Final_Project extends Scene {
       homerun: new Audio("assets/cheering.mp3"),
       booing: new Audio("assets/boo.mp3"),
       booing2: new Audio("assets/Boo-sound.mp3"),
+      applause: new Audio("assets/applause2.mp3"),
       standby: new Audio("assets/standby.mp3"),
       you_win: new Audio ("assets/champion.mp3")
     };
@@ -302,6 +303,10 @@ class Final_Project extends Scene {
     this.homeRun = false;
     this.pitch_time = false;
     this.pitch_timer = 0;
+
+    this.play_boo_once = false;
+
+    this.difficulty = 1;
   }
   simulate(frame_time) {
     frame_time = this.time_scale * frame_time;
@@ -329,6 +334,7 @@ class Final_Project extends Scene {
       this.currentScore = 0;
       this.pitchCounter = 20;
       this.gameBegan = 0;
+      this.play_boo_once = false;
     });
     this.key_triggered_button("Change day/night time", ["n"], () => {
       if (this.nightTime == true) {
@@ -348,6 +354,15 @@ class Final_Project extends Scene {
     });
     this.key_triggered_button("Home Run", ["8"], () => {
       this.batCollisionDetection = true;
+    });
+
+    this.key_triggered_button("Easy", ["1"], () => {
+      this.difficulty = 1;
+    });
+
+    this.key_triggered_button("Normal", ["2"], () => {
+      this.batCollisionDetection = true;
+      this.difficulty = 2;
     });
   }
 
@@ -473,12 +488,22 @@ class Final_Project extends Scene {
 
       title_text = title_text
           .times(Mat4.translation([-17, -2, 0]))
-          .times(Mat4.scale([0.5, 0.5, 0.5]));
+          .times(Mat4.scale([0.47, 0.47, 0.47]));
 
-      this.shapes.long_text.set_string(
-          "Rules: Win by hitting 3 home-runs (Swing with SPACE) and DONT HIT THE BASKETBALLS",
+      if (this.difficulty == 1)
+      {
+        this.shapes.long_text.set_string(
+          "Rules: Win by hitting 3 baseballs (Swing with SPACE) and DONT HIT THE BASKETBALLS",
           context.context
-      );
+        );
+      }
+      else
+      {
+        this.shapes.long_text.set_string(
+            "Rules: Win by hitting 3 home-runs (Swing with SPACE) and DONT HIT THE BASKETBALLS",
+            context.context
+        );
+      }
       this.shapes.long_text.draw(
           context,
           program_state,
@@ -678,6 +703,12 @@ class Final_Project extends Scene {
     }
 
     if (this.currentState == this.stateOfGame.gameOver) {
+      this.sounds.applause.pause();
+      if (!this.play_boo_once){
+        this.sounds.booing.play();
+        this.sounds.booing2.play();
+        this.play_boo_once = true;
+      }
       this.sounds.standby.play();
       program_state.set_camera(
           Mat4.inverse(Mat4.identity().times(Mat4.translation([0, 500, 0])))
@@ -2175,9 +2206,16 @@ class Baseball extends Final_Project {
               this.sounds.homerun.play();
             } else {
               //NOT HOMERUN
-              this.currentScore++;
-              this.sounds.booing.play();
-              this.sounds.booing2.play();
+              if (this.difficulty == 1)
+              {
+                this.currentScore++;
+                this.sounds.applause.play();
+              }
+              else{
+                this.sounds.booing.play();
+                this.sounds.booing2.play();
+              }
+              
             }
           }
           ball.linear_velocity[0] *= 0.6;
